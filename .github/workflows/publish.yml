@@ -5,13 +5,16 @@ name: Publish to npm
 # release. Auth is npm's Trusted Publisher (OIDC): no token, no secret, and npm
 # attaches provenance by itself because this repository is public.
 #
-# Before the first publish, add the Trusted Publisher on npmjs.com:
-#   package: tools-modeltrace
-#   provider: GitHub Actions
-#   user: nil-err   repository: magpie-modeltrace   workflow: publish.yml
-#   allowed actions: npm publish (npm stage publish is always allowed)
-# npm does not check that configuration when you save it; a mismatch shows up
-# here as ENEEDAUTH.
+# One-time setup on npmjs.com, before this can work at all:
+#   npm requires the package to exist before a trusted publisher can be attached,
+#   so `tools-modeltrace@0.1.0` was published by hand once. After that, on the
+#   package's settings page:
+#     provider: GitHub Actions
+#     user: nil-err   repository: magpie-modeltrace   workflow: publish.yml
+#     allowed actions: npm publish (npm stage publish is always allowed)
+#   npm does not check that configuration when you save it, and a newly created
+#   one expires in 2 days unless the first publish succeeds. A mismatch shows up
+#   here as ENEEDAUTH (404 for a package that isn't there yet).
 
 on:
   push:
@@ -80,6 +83,7 @@ jobs:
           fi
 
       - if: steps.version.outputs.exists != 'true'
+        id: publish
         name: npm publish (Trusted Publisher, OIDC)
         shell: bash
         run: |
@@ -99,5 +103,26 @@ jobs:
         run: |
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
-          echo "published ${name}@${version}" >> "$GITHUB_STEP_SUMMARY"
+          echo "published or attempted: ${name}@${version}" >> "$GITHUB_STEP_SUMMARY"
           echo "https://www.npmjs.com/package/${name}/v/${version}" >> "$GITHUB_STEP_SUMMARY"
+
+      # The first publish cannot be done from here: npm has no package to attach
+      # a trusted publisher to yet. This is the failure the very first run hits,
+      # so say what to do instead of leaving a bare 404.
+      - if: failure() && steps.publish.outcome == 'failure'
+        name: If npm refused, explain the one-time step
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ### npm refused the publish
+
+          If the log says `E404 … PUT https://registry.npmjs.org/tools-modeltrace`, the
+          package does not exist on npm yet. npm only attaches a Trusted Publisher to a
+          package that exists, so publish `0.1.0` by hand once, then add the trusted
+          publisher (user `nil-err`, repository `magpie-modeltrace`, workflow `publish.yml`,
+          allowed action `npm publish`) and every later version goes out from here.
+
+          If it says `ENEEDAUTH`, the trusted publisher's repository, workflow filename or
+          allowed actions do not match this workflow; all fields are case-sensitive.
+          EOF
+          echo "see the run log for the npm error" >&2

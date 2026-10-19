@@ -115,10 +115,23 @@ so a high number is not proof of anything — only evidence about a suspicion.
   `scripts/evaluate-calibration.mjs` for a holdout set; nothing does that here yet.
   Treat a disagreement as a reason to look, not a verdict.
 
+## Publishing
+
+`master` publishes by itself: the `Publish to npm` workflow runs the tests, checks
+the bank against `data/provenance.json`, and publishes whatever version
+`package.json` names — only when npm doesn't have it yet. Bump the version to
+release; a docs commit is a no-op.
+
+Auth is npm's Trusted Publisher (OIDC): no token, no secret. npm only attaches a
+trusted publisher to a package that already exists, so `0.1.0` went out by hand
+once; after that, on the package's settings page: provider GitHub Actions, user
+`nil-err`, repository `magpie-modeltrace`, workflow `publish.yml`, allowed action
+`npm publish`.
+
 ## Development
 
 ```sh
-npm test                     # 51 cases: the maths' parity, the probes, the tools, the words
+npm test                     # the maths' parity, the probes, the tools, the words
 npm run verify:parity        # the same comparison against a clone of xqy2006/ModelTrace
 npm run sync:bank            # check whether upstream's bank moved (writes nothing without --write)
 ```
