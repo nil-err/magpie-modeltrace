@@ -386,3 +386,9 @@ footer {
 a {
   color: var(--accent);
 }
+
+.rest {
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
