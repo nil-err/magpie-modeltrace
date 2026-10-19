@@ -9,7 +9,7 @@ unusable.
 Made for the question "is this relay / reseller / routing group really serving
 the model it says it is?".
 
-**Live:** https://modeltrace.pages.dev — a static page, no backend, nothing
+**Live:** https://modeltrace.teyvat.org — a static page, no backend, nothing
 collected. Your gateway URL and key stay in your browser's localStorage.
 
 ## Using the page
@@ -178,3 +178,15 @@ Only the bank's *location* differs — `lib/bank.mjs` fetches it for the page,
   check — earlier.
 
 Not affiliated with ModelTrace's author. See `THIRD_PARTY_NOTICES.md`.
+
+### The custom domain
+
+The site is served at **modeltrace.teyvat.org**: a proxied `CNAME` to
+`modeltrace-f0z.pages.dev` in the `teyvat.org` zone, with the domain attached to
+the Pages project (so Cloudflare issues the certificate and validates it). The
+`*.pages.dev` name keeps working — it is the same deployment — but the custom
+domain is the one to share.
+
+Unlike the other `teyvat.org` hostnames, this one is **not** behind Cloudflare
+Access: the page is a static tool and holds no secret. Add an Access application
+for it if that changes.
