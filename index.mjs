@@ -14,7 +14,8 @@
  * loopback gateway magpie is already serving, nothing written to disk.
  */
 
-import { bankSummary, loadBank, normalizeExclude } from "./lib/bank.mjs";
+import { bankSummary, normalizeExclude } from "./lib/bank.mjs";
+import { loadBank } from "./lib/bank-node.mjs";
 import { generateChallenges } from "./lib/challenges.mjs";
 import { DEFAULT_BASE, DEFAULT_BUDGET_MS, collectAnswers } from "./lib/probe.mjs";
 import { attribute, reportText } from "./lib/report.mjs";
@@ -37,6 +38,9 @@ const options = (given) => {
     // Ask one at a time for an upstream that cannot take a burst. Slower,
     // and usually past the budget for a thinking model.
     parallel: o.parallel !== false,
+    // Headers every probe carries, for a gateway that wants one. magpie's own
+    // loopback needs none.
+    headers: o.headers && typeof o.headers === "object" && !Array.isArray(o.headers) ? o.headers : {},
   };
 };
 
@@ -194,6 +198,7 @@ const attributeTool = (opts) => ({
         challenges,
         budgetMs: opts.budgetMs,
         parallel: opts.parallel,
+        headers: opts.headers,
         deadlineSignal: ctx?.abort,
       });
       answers = collected.map((answer) => ({ ...answer, model_asked: model }));

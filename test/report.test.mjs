@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadBank } from "../lib/bank.mjs";
+import { loadBank } from "../lib/bank-node.mjs";
 import { attribute, caveats, reportText, summaryLine } from "../lib/report.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

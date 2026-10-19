@@ -1,29 +1,19 @@
 {
-  "name": "tools-modeltrace",
-  "version": "0.1.0",
-  "description": "Model attribution as magpie plugin tools: make a model pick long lists of first-instinct integers and score them against ModelTrace's fingerprint bank, to test whether a relay or a routing group serves what it says",
+  "name": "modeltrace",
+  "version": "0.2.0",
+  "private": true,
+  "description": "ModelTrace model attribution: a browser app (Cloudflare Pages) and magpie plugin tools that ask a model for long lists of first-instinct integers and score them against ModelTrace's fingerprint bank",
   "type": "module",
   "main": "./index.mjs",
-  "files": [
-    "index.mjs",
-    "lib/",
-    "data/",
-    "THIRD_PARTY_NOTICES.md",
-    "LICENSE",
-    "README.md"
-  ],
   "keywords": [
-    "magpie",
-    "magpie-tools",
-    "magpie-plugin",
-    "mcp",
-    "opencode",
-    "opencode-plugin",
     "modeltrace",
     "model-attribution",
     "model-fingerprint",
     "llm-gateway",
-    "relay-detection"
+    "relay-detection",
+    "magpie",
+    "magpie-plugin",
+    "cloudflare-pages"
   ],
   "license": "MIT",
   "author": "nil-err",
@@ -36,9 +26,12 @@
     "url": "https://github.com/nil-err/magpie-modeltrace/issues"
   },
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && node scripts/serve.mjs",
     "test": "node --test \"test/*.test.mjs\"",
     "verify:parity": "node scripts/verify-parity.mjs",
-    "sync:bank": "node scripts/sync-bank.mjs"
+    "sync:bank": "node scripts/sync-bank.mjs",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name modeltrace --branch master"
   },
   "magpie": {
     "options": {
@@ -48,6 +41,5 @@
       "budgetMs": 45000,
       "parallel": true
     }
-  },
-  "private": true
+  }
 }

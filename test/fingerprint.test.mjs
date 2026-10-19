@@ -14,7 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DIMENSION, analyzeOutputs, countNumbers, minimumNumbers, parseNumbers } from "../lib/fingerprint.mjs";
-import { loadBank } from "../lib/bank.mjs";
+import { loadBank } from "../lib/bank-node.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const bank = loadBank();

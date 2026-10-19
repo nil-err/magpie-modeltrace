@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ModelTrace — 模型指纹归因</title>
+    <meta
+      name="description"
+      content="把一组模型指向任意 OpenAI 兼容网关，让它们按 ModelTrace 的题目给出整数序列，再按指纹库判断它最像哪个模型。"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header>
+      <h1>ModelTrace</h1>
+      <p class="lede">
+        让一个模型凭第一反应写出一长串整数，再和 ModelTrace 的指纹库比对，看它最像库里的哪个模型。
+        用于回答「这个中转 / 路由组给的到底是不是它说的那个模型」。
+      </p>
+    </header>
+
+    <main>
+      <section class="card" id="connection">
+        <h2>连接</h2>
+        <p class="hint">
+          任何 OpenAI 兼容的 <code>/v1/chat/completions</code> 都可以：magpie 网关、官方 API、或第三方中转。
+          配置只存在这台浏览器的 localStorage 里，不会上传到任何地方。
+        </p>
+
+        <div class="grid">
+          <label class="wide">
+            <span>网关地址 Base URL</span>
+            <input id="base" type="url" spellcheck="false" placeholder="https://magpie.example.com 或 https://host/v1" />
+          </label>
+
+          <label class="wide">
+            <span>API Key（作为 <code>Authorization: Bearer …</code> 发送）</span>
+            <input id="key" type="password" spellcheck="false" autocomplete="off" placeholder="留空则不发送" />
+          </label>
+
+          <label class="wide">
+            <span>额外请求头（每行 <code>Name: value</code>，例如 <code>x-api-key: …</code>）</span>
+            <textarea id="headers" rows="2" spellcheck="false" placeholder="x-api-key: sk-…"></textarea>
+          </label>
+
+          <label class="wide">
+            <span>API Key 请求头名</span>
+            <select id="keyHeader">
+              <option value="authorization">Authorization: Bearer …</option>
+              <option value="x-api-key">x-api-key: …</option>
+              <option value="none">不发送 Key</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <button id="save" type="button" class="primary">保存</button>
+          <button id="loadModels" type="button">拉取模型列表</button>
+          <span id="connState" class="state"></span>
+        </div>
+        <p class="hint">
+          浏览器直连要求网关允许本站来源（CORS）。magpie 需把本站 origin 填进
+          <strong>Settings → CORS origins</strong>；官方 API 一般不允许浏览器直连，请改用中转。
+        </p>
+      </section>
+
+      <section class="card" id="models">
+        <h2>模型</h2>
+        <div class="row">
+          <input id="filter" type="search" placeholder="筛选模型 id…" spellcheck="false" />
+          <button id="selectAll" type="button">全选可见</button>
+          <button id="selectNone" type="button">清空</button>
+          <span id="modelCount" class="state"></span>
+        </div>
+        <div id="modelList" class="models"></div>
+        <label class="wide">
+          <span>排除候选（逗号分隔，指纹库里的 id，如 <code>gpt-5.4</code>）</span>
+          <input id="exclude" type="text" spellcheck="false" placeholder="留空则用全部候选" />
+        </label>
+      </section>
+
+      <section class="card" id="run">
+        <h2>运行</h2>
+        <div class="grid">
+          <label>
+            <span>每个模型的题目数</span>
+            <input id="challenges" type="number" min="1" max="6" step="1" value="3" />
+          </label>
+          <label>
+            <span>每个模型并发探测</span>
+            <select id="parallel">
+              <option value="true">并发（推荐）</option>
+              <option value="false">逐个串行</option>
+            </select>
+          </label>
+          <label>
+            <span>同时测试的模型数</span>
+            <input id="concurrency" type="number" min="1" max="8" step="1" value="2" />
+          </label>
+          <label>
+            <span>单个探测超时（秒）</span>
+            <input id="timeout" type="number" min="10" max="600" step="10" value="120" />
+          </label>
+        </div>
+        <div class="row">
+          <button id="start" type="button" class="primary">开始测试</button>
+          <button id="stop" type="button" disabled>停止</button>
+          <span id="runState" class="state"></span>
+        </div>
+        <div id="progress" class="progress" hidden><div id="progressBar"></div></div>
+      </section>
+
+      <section class="card" id="results">
+        <h2>结果</h2>
+        <p class="hint">
+          这是一个<strong>闭集</strong>：概率只在指纹库里的 18 个模型之间分配。库里没有的模型也会被判给最接近的那个，
+          所以数字高不等于证据，只说明值得看一眼。
+        </p>
+        <div id="resultBody" class="results"></div>
+      </section>
+
+      <details class="card" id="bank">
+        <summary><h2>指纹库</h2></summary>
+        <div id="bankBody" class="hint">加载中…</div>
+      </details>
+    </main>
+
+    <footer>
+      <p>
+        算法与指纹库移植自 <a href="https://github.com/xqy2006/ModelTrace" target="_blank" rel="noreferrer">xqy2006/ModelTrace</a>（MIT）。
+        纯前端运行，没有服务端，不收集任何数据。
+      </p>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
