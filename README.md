@@ -190,3 +190,30 @@ domain is the one to share.
 Unlike the other `teyvat.org` hostnames, this one is **not** behind Cloudflare
 Access: the page is a static tool and holds no secret. Add an Access application
 for it if that changes.
+
+## Calling a gateway behind Cloudflare Access
+
+`magpie.teyvat.org` sits behind Cloudflare Access, and a browser cannot call it
+directly no matter how the gateway is configured:
+
+- Access answers an `OPTIONS` preflight with `403` for every caller, because a
+  preflight never carries cookies — [Cloudflare's own
+  documentation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/cors/)
+  says so;
+- magpie's CORS guard wants a gateway key on the preflight as well, and a
+  preflight never carries `Authorization` either.
+
+So the page ships a proxy at `/gw`. The browser calls its **own** origin
+(`https://modeltrace.teyvat.org/gw/v1/models`), which is not a cross-origin
+request at all; the Pages Function `web/_worker.js` forwards it to the gateway
+and adds the Access service token on the way out. The token lives in the Pages
+project's environment (`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`,
+`MAGPIE_ORIGIN`), never in the browser.
+
+The proxy is not a way around magpie's own authentication: it forwards only
+`/gw/v1/*`, and the **gateway key still has to come from the page** — magpie
+refuses a keyless call from another machine. What the service token buys is the
+edge hop.
+
+To point the proxy at a different gateway, set `MAGPIE_ORIGIN` on the project.
+To use a gateway that answers CORS itself, type its URL over `/gw`.

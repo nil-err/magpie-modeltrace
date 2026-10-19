@@ -7,7 +7,9 @@
 const STORAGE_KEY = "modeltrace.settings.v1";
 
 export const DEFAULTS = {
-  base: "",
+  // The page's own /gw proxy: same-origin, so no preflight and no CORS at all.
+  // A gateway that answers cross-origin directly can be typed over it.
+  base: "/gw",
   key: "",
   keyHeader: "authorization",
   headers: "",

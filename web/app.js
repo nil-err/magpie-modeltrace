@@ -249,6 +249,13 @@ async function boot() {
 
   $("save").addEventListener("click", save);
   $("loadModels").addEventListener("click", loadModels);
+  $("useProxy").addEventListener("click", () => {
+    // The page's own /gw proxy: same-origin, so no preflight and no Access
+    // service token in the browser. A gateway key still has to be typed.
+    $("base").value = "/gw";
+    readForm();
+    setState("connState", "已切到本站 /gw 代理；填上网关 key 后点「拉取模型列表」", "ok");
+  });
   $("start").addEventListener("click", start);
   $("stop").addEventListener("click", stop);
 

@@ -25,6 +25,7 @@ const FILES = [
   ["web/runner.js", "runner.js"],
   ["web/render.js", "render.js"],
   ["web/gateway.js", "gateway.js"],
+  ["web/_worker.js", "_worker.js"],
   ["lib/bank.mjs", "lib/bank.mjs"],
   ["lib/challenges.mjs", "lib/challenges.mjs"],
   ["lib/fingerprint.mjs", "lib/fingerprint.mjs"],

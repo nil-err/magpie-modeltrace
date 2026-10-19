@@ -24,14 +24,15 @@
       <section class="card" id="connection">
         <h2>连接</h2>
         <p class="hint">
-          任何 OpenAI 兼容的 <code>/v1/chat/completions</code> 都可以：magpie 网关、官方 API、或第三方中转。
+          默认走本站的 <code>/gw</code> 代理（同源，不触发跨域预检，Access 的 service token 留在服务端，不进浏览器）。
+          也可以填任何 OpenAI 兼容网关：magpie 网关、官方 API、或第三方中转。
           配置只存在这台浏览器的 localStorage 里，不会上传到任何地方。
         </p>
 
         <div class="grid">
           <label class="wide">
             <span>网关地址 Base URL</span>
-            <input id="base" type="url" spellcheck="false" placeholder="https://magpie.example.com 或 https://host/v1" />
+            <input id="base" type="text" spellcheck="false" placeholder="/gw 或 https://gateway.example.com" />
           </label>
 
           <label class="wide">
@@ -57,11 +58,13 @@
         <div class="row">
           <button id="save" type="button" class="primary">保存</button>
           <button id="loadModels" type="button">拉取模型列表</button>
+          <button id="useProxy" type="button">用本站 /gw 代理</button>
           <span id="connState" class="state"></span>
         </div>
         <p class="hint">
-          浏览器直连要求网关允许本站来源（CORS）。magpie 需把本站 origin 填进
-          <strong>Settings → CORS origins</strong>；官方 API 一般不允许浏览器直连，请改用中转。
+          <code>/gw</code> 只能转发 <code>/gw/v1/*</code> 到本站配置的 magpie 网关，网关 key 仍必须由页面自己带上。
+          直连其他网关则要求对方允许本站来源（CORS）：magpie 需把本站 origin 填进 <strong>Settings → CORS origins</strong>，
+          且 <em>它仍然解决不了预检</em>——预检会被 Cloudflare Access 拦下，所以 magpie 这类受 Access 保护的网关请走 <code>/gw</code>。
         </p>
       </section>
 
