@@ -1,0 +1,103 @@
+name: Publish to npm
+
+# Every push to master publishes — but only when the version in package.json is
+# one npm doesn't have yet, so a docs commit is a no-op and a version bump is the
+# release. Auth is npm's Trusted Publisher (OIDC): no token, no secret, and npm
+# attaches provenance by itself because this repository is public.
+#
+# Before the first publish, add the Trusted Publisher on npmjs.com:
+#   package: tools-modeltrace
+#   provider: GitHub Actions
+#   user: nil-err   repository: magpie-modeltrace   workflow: publish.yml
+#   allowed actions: npm publish (npm stage publish is always allowed)
+# npm does not check that configuration when you save it; a mismatch shows up
+# here as ENEEDAUTH.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      # Trusted publishing needs npm >= 11.5.1 and Node >= 22.14; pin the CLI
+      # rather than trust the one bundled with the runner.
+      - run: npm install --global npm@11.5.1
+      - run: node --version && npm --version
+
+      - name: Test
+        run: npm test
+
+      - name: Check the bank matches its provenance
+        shell: bash
+        run: |
+          node -e '
+            const crypto = require("node:crypto"), fs = require("node:fs");
+            const p = JSON.parse(fs.readFileSync("data/provenance.json", "utf8"));
+            const b = fs.readFileSync("data/unified_bank.json");
+            const hash = crypto.createHash("sha256").update(b).digest("hex");
+            if (hash !== p.bank.sha256) {
+              console.error(`data/unified_bank.json is ${hash}, provenance says ${p.bank.sha256}`);
+              console.error("run `npm run sync:bank -- --write` and commit the result");
+              process.exit(1);
+            }
+            console.log(`bank ${p.bank.built_at} (${p.bank.models} models) matches provenance`);
+          '
+
+      - id: version
+        name: Is this version already on npm?
+        shell: bash
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${name}@${version} is already published; nothing to do"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "${name}@${version} will be published"
+          fi
+
+      - if: steps.version.outputs.exists != 'true'
+        name: npm publish (Trusted Publisher, OIDC)
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [[ "${version}" == *-* ]]; then
+            # Never move `latest` from a prerelease.
+            npm publish --tag next
+          else
+            # Provenance is on by itself with trusted publishing; package.json
+            # asks for it too, so a local publish is not the odd one out.
+            npm publish
+          fi
+
+      - if: steps.version.outputs.exists != 'true'
+        name: Say what was published
+        shell: bash
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          echo "published ${name}@${version}" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://www.npmjs.com/package/${name}/v/${version}" >> "$GITHUB_STEP_SUMMARY"

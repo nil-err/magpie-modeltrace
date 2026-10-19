@@ -1,0 +1,20 @@
+{
+  "bank": {
+    "file": "unified_bank.json",
+    "sha256": "f267d0513aa06981d024ec5394746fceddf44e4e8a75fa6bf8304255f4b32d6d",
+    "bytes": 931426,
+    "built_at": "2026-10-09T06:24:27.469312+00:00",
+    "models": 18
+  },
+  "source": {
+    "repository": "https://github.com/xqy2006/ModelTrace",
+    "license": "MIT",
+    "commit": "HEAD as of 2026-10-09 (bank built 2026-10-09T06:24:27Z)",
+    "files": [
+      "data/unified_bank.json",
+      "static/fingerprint-core.js (ported to lib/fingerprint.mjs)",
+      "static/challenge-browser.js (ported to lib/challenges.mjs)"
+    ]
+  },
+  "note": "Re-run `npm run sync:bank` to compare against upstream; it never writes without --write."
+}

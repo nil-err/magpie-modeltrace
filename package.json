@@ -1,0 +1,59 @@
+{
+  "name": "tools-modeltrace",
+  "version": "0.1.0",
+  "description": "Model attribution as magpie plugin tools: make a model pick long lists of first-instinct integers and score them against ModelTrace's fingerprint bank, to test whether a relay or a routing group serves what it says",
+  "type": "module",
+  "main": "./index.mjs",
+  "files": [
+    "index.mjs",
+    "lib/",
+    "data/",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "magpie",
+    "magpie-tools",
+    "magpie-plugin",
+    "mcp",
+    "opencode",
+    "opencode-plugin",
+    "modeltrace",
+    "model-attribution",
+    "model-fingerprint",
+    "llm-gateway",
+    "relay-detection"
+  ],
+  "license": "MIT",
+  "author": "nil-err",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nil-err/magpie-modeltrace.git"
+  },
+  "homepage": "https://github.com/nil-err/magpie-modeltrace#readme",
+  "bugs": {
+    "url": "https://github.com/nil-err/magpie-modeltrace/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "verify:parity": "node scripts/verify-parity.mjs",
+    "sync:bank": "node scripts/sync-bank.mjs"
+  },
+  "magpie": {
+    "options": {
+      "model": "",
+      "exclude": [],
+      "gateway": "http://127.0.0.1:3425",
+      "budgetMs": 45000,
+      "parallel": true
+    }
+  }
+}

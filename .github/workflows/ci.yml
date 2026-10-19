@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22.14", "24"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      # The package has no dependencies, so there is nothing to install: that
+      # is part of the point — nothing to audit, nothing to pin.
+      - run: node --version
+      - run: npm test
+
+  parity:
+    name: Parity with ModelTrace's scorer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      # Clones xqy2006/ModelTrace and scores its reference answers with both
+      # scorers. This is the check that keeps the port honest: a refactor here
+      # that changes a probability fails, however tidy it looks.
+      - run: node scripts/verify-parity.mjs
+
+  bank:
+    name: Bank matches provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - shell: bash
+        run: |
+          node -e '
+            const crypto = require("node:crypto"), fs = require("node:fs");
+            const p = JSON.parse(fs.readFileSync("data/provenance.json", "utf8"));
+            const b = fs.readFileSync("data/unified_bank.json");
+            const hash = crypto.createHash("sha256").update(b).digest("hex");
+            if (hash !== p.bank.sha256) { console.error("bank hash mismatch"); process.exit(1); }
+            console.log(`bank ${p.bank.built_at} (${p.bank.models} models) matches provenance`);
+          '
