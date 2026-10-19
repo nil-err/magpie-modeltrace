@@ -35,13 +35,6 @@
   "bugs": {
     "url": "https://github.com/nil-err/magpie-modeltrace/issues"
   },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "engines": {
-    "node": ">=22.14.0"
-  },
   "scripts": {
     "test": "node --test \"test/*.test.mjs\"",
     "verify:parity": "node scripts/verify-parity.mjs",
@@ -55,5 +48,6 @@
       "budgetMs": 45000,
       "parallel": true
     }
-  }
+  },
+  "private": true
 }

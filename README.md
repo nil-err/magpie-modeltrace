@@ -10,12 +10,17 @@ Made for the question "is this relay / reseller / routing group really serving t
 model it says it is?".
 
 ```sh
-magpie plugin add tools-modeltrace
+magpie plugin add github:nil-err/magpie-modeltrace
 magpie plugin                     # lists the tools: modeltrace_fingerprints, modeltrace_challenge, modeltrace_attribute
 ```
 
-magpie serves them on its MCP server, `/mcp/magpie/tools`, to every agent it has
-connected (magpie v0.1.1260 or later names them after the plugin's short name,
+It installs from this repository, not from npm: the package is not published
+there, and bun clones and pins the branch through magpie's own install path, so a
+`magpie plugin update` picks up a new push. The repository is tagged
+`magpie-plugin`, so it also shows up on magpie's **Plugins › Discover** page.
+
+magpie serves the tools on its MCP server, `/mcp/magpie/tools`, to every agent it
+has connected (magpie v0.1.1260 or later names them after the plugin's short name,
 `modeltrace`).
 
 ## The three tools
@@ -115,18 +120,12 @@ so a high number is not proof of anything — only evidence about a suspicion.
   `scripts/evaluate-calibration.mjs` for a holdout set; nothing does that here yet.
   Treat a disagreement as a reason to look, not a verdict.
 
-## Publishing
+## Releasing
 
-`master` publishes by itself: the `Publish to npm` workflow runs the tests, checks
-the bank against `data/provenance.json`, and publishes whatever version
-`package.json` names — only when npm doesn't have it yet. Bump the version to
-release; a docs commit is a no-op.
-
-Auth is npm's Trusted Publisher (OIDC): no token, no secret. npm only attaches a
-trusted publisher to a package that already exists, so `0.1.0` went out by hand
-once; after that, on the package's settings page: provider GitHub Actions, user
-`nil-err`, repository `magpie-modeltrace`, workflow `publish.yml`, allowed action
-`npm publish`.
+There is nothing to publish: `master` is the release. Installing is
+`github:nil-err/magpie-modeltrace`, and `magpie plugin update` re-clones the
+branch, so a push is a release. `ci.yml` runs the tests, the parity check and the
+bank's provenance check on every push.
 
 ## Development
 
